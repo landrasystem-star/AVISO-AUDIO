@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Envía texto, audio o ambos a Facebook</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1877f2, #0e5ec7);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 40px;
+            padding: 40px;
+            max-width: 550px;
+            width: 100%;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            color: #1877f2;
+            text-align: center;
+            margin-bottom: 8px;
+            font-size: 1.6em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 25px;
+            font-size: 0.85em;
+        }
+
+        label {
+            font-weight: 600;
+            color: #333;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 20px;
+            font-size: 0.95em;
+            font-family: inherit;
+            resize: vertical;
+            margin-bottom: 20px;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #1877f2;
+        }
+
+        .voz-area {
+            background: #f0f2f5;
+            border-radius: 25px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .voz-header {
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #333;
+            font-size: 0.9em;
+        }
+
+        .timer {
+            font-size: 2em;
+            font-family: monospace;
+            text-align: center;
+            margin: 10px 0;
+        }
+
+        .btn-record, .btn-stop {
+            padding: 8px 18px;
+            font-size: 0.9em;
+            font-weight: bold;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            margin: 3px;
+        }
+
+        .btn-record {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-stop {
+            background: #f39c12;
+            color: white;
+        }
+
+        .btn-record:hover, .btn-stop:hover {
+            transform: scale(1.02);
+        }
+
+        .btn-record:disabled, .btn-stop:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .audio-preview {
+            background: #e8f4fd;
+            padding: 12px;
+            border-radius: 20px;
+            margin-top: 12px;
+            display: none;
+        }
+
+        audio {
+            width: 100%;
+            margin-top: 8px;
+        }
+
+        .btn-send {
+            background: #1877f2;
+            color: white;
+            border: none;
+            padding: 14px;
+            font-size: 1.1em;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 15px;
+            transition: transform 0.2s;
+        }
+
+        .btn-send:hover {
+            background: #0e62cf;
+            transform: scale(1.01);
+        }
+
+        .btn-send:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            display: none;
+        }
+
+        .status.show {
+            display: block;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status.info {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+
+        .opcion-label {
+            font-size: 0.75em;
+            color: #888;
+            text-align: center;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>📨 Enviar a Facebook</h1>
+        <p class="subtitle">Elige: solo texto | solo audio | texto + audio</p>
+
+        <!-- Campo de texto -->
+        <label>📝 Mensaje de texto (opcional):</label>
+        <textarea id="mensajeTexto" rows="2" placeholder="Escribe aquí... (puedes dejarlo vacío)"></textarea>
+
+        <!-- Sección de voz -->
+        <div class="voz-area">
+            <div class="voz-header">🎙️ Audio (opcional):</div>
+            <div class="timer" id="timer">00:00</div>
+            <div style="text-align: center;">
+                <button class="btn-record" id="btnRecord">🔴 Grabar</button>
+                <button class="btn-stop" id="btnStop" disabled>⏹️ Detener</button>
+            </div>
+            <div id="audioPreview" class="audio-preview"></div>
+        </div>
+
+        <!-- Botón enviar -->
+        <button class="btn-send" id="btnEnviar">
+            📨 Enviar a Facebook
+        </button>
+
+        <div class="opcion-label">
+            💡 Puedes enviar SOLO texto | SOLO audio | o AMBOS juntos
+        </div>
+
+        <div id="status" class="status"></div>
+    </div>
+
+    <script>
+        // ============================================================
+        // 🔴 PON AQUÍ TU ENLACE DE CALLMEBOT (partes 1 y 2) 🔴
+        // ============================================================
+        // Parte 1: todo lo que va ANTES del mensaje (incluyendo "&text=")
+        const PARTE1 = "https://api.callmebot.com/facebook/send.php?apikey=2saMJIk12vXwDZd9&text=";
+        
+        // Parte 2: todo lo que va DESPUÉS del mensaje (desde &fbclid=...)
+        const PARTE2 = "&fbclid=IwY2xjawSYS9JleHRuA2FlbQIxMABicmlkETBmTUpxNlJQTHZ6OEhBRVZmc3J0YwZhcHBfaWQQMjIyMDM5MTc4ODIwMDg5MgABHuSl6tVFiv-NXdZbw3HVhd1Y1XpbA9F3YWFvjMK2FKzIzmU-HdTF-qdOleT__aem_6r1sDt8j8hFEDRRFDQZRSw";
+        // ============================================================
+
+        // Elementos
+        const mensajeTexto = document.getElementById('mensajeTexto');
+        const btnEnviar = document.getElementById('btnEnviar');
+        const statusDiv = document.getElementById('status');
+        
+        // Elementos de voz
+        const btnRecord = document.getElementById('btnRecord');
+        const btnStop = document.getElementById('btnStop');
+        const timerDisplay = document.getElementById('timer');
+        const audioPreviewDiv = document.getElementById('audioPreview');
+        
+        // Variables de voz
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let recordingInterval = null;
+        let recordingSeconds = 0;
+        let recordedBlob = null;
+        let audioUrl = null;
+        let tengoAudio = false;
+
+        function showStatus(message, type = 'info') {
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type} show`;
+            setTimeout(() => {
+                statusDiv.classList.remove('show');
+            }, 3500);
+        }
+
+        // ============================================================
+        // GRABAR AUDIO
+        // ============================================================
+        async function startRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+                tengoAudio = false;
+                
+                mediaRecorder.ondataavailable = (event) => {
+                    audioChunks.push(event.data);
+                };
+                
+                mediaRecorder.onstop = () => {
+                    recordedBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    stopTimer();
+                    tengoAudio = true;
+                    
+                    if (audioUrl) URL.revokeObjectURL(audioUrl);
+                    audioUrl = URL.createObjectURL(recordedBlob);
+                    audioPreviewDiv.innerHTML = `
+                        <strong>✅ Audio listo:</strong>
+                        <audio controls src="${audioUrl}"></audio>
+                    `;
+                    audioPreviewDiv.style.display = 'block';
+                    showStatus('Audio grabado correctamente', 'success');
+                    
+                    stream.getTracks().forEach(track => track.stop());
+                };
+                
+                mediaRecorder.start(100);
+                startTimer();
+                showStatus('🎙️ Grabando... presiona Detener', 'info');
+                
+                btnRecord.disabled = true;
+                btnStop.disabled = false;
+                
+            } catch (err) {
+                if (err.name === 'NotAllowedError') {
+                    showStatus('❌ Permite el acceso al micrófono', 'error');
+                } else {
+                    showStatus('❌ Error: ' + err.message, 'error');
+                }
+            }
+        }
+        
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+                btnRecord.disabled = false;
+                btnStop.disabled = true;
+            }
+        }
+        
+        function startTimer() {
+            recordingSeconds = 0;
+            timerDisplay.textContent = '00:00';
+            if (recordingInterval) clearInterval(recordingInterval);
+            recordingInterval = setInterval(() => {
+                recordingSeconds++;
+                const mins = Math.floor(recordingSeconds / 60);
+                const secs = recordingSeconds % 60;
+                timerDisplay.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+        
+        function stopTimer() {
+            if (recordingInterval) {
+                clearInterval(recordingInterval);
+                recordingInterval = null;
+            }
+        }
+        
+        function blobToDataUrl(blob) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+        }
+        
+        // ============================================================
+        // ENVIAR (texto, audio, o ambos)
+        // ============================================================
+        async function enviar() {
+            const texto = mensajeTexto.value.trim();
+            
+            // Verificar que haya al menos algo
+            if (!texto && !tengoAudio) {
+                showStatus('✏️ Escribe algo o graba un audio', 'error');
+                return;
+            }
+            
+            btnEnviar.disabled = true;
+            showStatus('📤 Enviando...', 'info');
+            
+            try {
+                let mensajeFinal = "";
+                
+                // SOLO TEXTO (sin audio)
+                if (texto && !tengoAudio) {
+                    mensajeFinal = texto;
+                }
+                
+                // SOLO AUDIO (sin texto)
+                else if (!texto && tengoAudio && recordedBlob) {
+                    const audioDataUrl = await blobToDataUrl(recordedBlob);
+                    mensajeFinal = audioDataUrl;
+                }
+                
+                // TEXTO + AUDIO (juntos)
+                else if (texto && tengoAudio && recordedBlob) {
+                    const audioDataUrl = await blobToDataUrl(recordedBlob);
+                    mensajeFinal = `${texto} ${audioDataUrl}`;
+                }
+                
+                // Construir URL final: PARTE1 + mensaje + PARTE2
+                const urlFinal = PARTE1 + encodeURIComponent(mensajeFinal) + PARTE2;
+                window.open(urlFinal, '_blank');
+                
+                // Mensaje de éxito
+                if (texto && tengoAudio) {
+                    showStatus('✅ Texto + Audio enviados', 'success');
+                } else if (texto) {
+                    showStatus('✅ Texto enviado', 'success');
+                } else {
+                    showStatus('✅ Audio enviado', 'success');
+                }
+                
+                // Limpiar todo después de enviar
+                mensajeTexto.value = '';
+                audioPreviewDiv.style.display = 'none';
+                recordedBlob = null;
+                tengoAudio = false;
+                timerDisplay.textContent = '00:00';
+                
+            } catch (error) {
+                showStatus('❌ Error: ' + error.message, 'error');
+            } finally {
+                btnEnviar.disabled = false;
+            }
+        }
+        
+        // Eventos
+        btnRecord.addEventListener('click', startRecording);
+        btnStop.addEventListener('click', stopRecording);
+        btnEnviar.addEventListener('click', enviar);
+        
+        // Verificar soporte
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            showStatus('⚠️ Tu navegador no soporta grabación de voz', 'error');
+            btnRecord.disabled = true;
+        }
+    </script>
+</body>
+</html>
