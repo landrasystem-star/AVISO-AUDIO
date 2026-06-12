@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Envía a Facebook - Texto | Audio | Ambos</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1877f2, #0e5ec7);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 40px;
+            padding: 40px;
+            max-width: 550px;
+            width: 100%;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            color: #1877f2;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 25px;
+            font-size: 0.85em;
+        }
+
+        /* Pestañas */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            background: #f0f2f5;
+            border: none;
+            border-radius: 30px;
+            font-size: 0.9em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #666;
+        }
+
+        .tab.active {
+            background: #1877f2;
+            color: white;
+        }
+
+        /* Paneles */
+        .panel {
+            display: none;
+        }
+
+        .panel.active {
+            display: block;
+        }
+
+        label {
+            font-weight: 600;
+            color: #333;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 20px;
+            font-size: 0.95em;
+            font-family: inherit;
+            resize: vertical;
+            margin-bottom: 20px;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #1877f2;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 20px;
+            font-size: 0.95em;
+            margin-bottom: 20px;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #1877f2;
+        }
+
+        .btn-vocaroo {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 12px;
+            font-size: 1em;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        .btn-vocaroo:hover {
+            background: #2ecc71;
+        }
+
+        .btn-send {
+            background: #1877f2;
+            color: white;
+            border: none;
+            padding: 14px;
+            font-size: 1.1em;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn-send:hover {
+            background: #0e62cf;
+        }
+
+        .status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            display: none;
+        }
+
+        .status.show {
+            display: block;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .info-box {
+            background: #e8f4fd;
+            padding: 12px;
+            border-radius: 15px;
+            margin: 15px 0;
+            font-size: 0.75em;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>📨 Enviar a Facebook</h1>
+        <p class="subtitle">Elige: solo texto | solo audio | texto + audio</p>
+
+        <!-- Pestañas -->
+        <div class="tabs">
+            <button class="tab active" data-tab="texto">📝 Solo texto</button>
+            <button class="tab" data-tab="audio">🎙️ Solo audio</button>
+            <button class="tab" data-tab="ambos">📝+🎙️ Texto + audio</button>
+        </div>
+
+        <!-- Panel SOLO TEXTO -->
+        <div id="panelTexto" class="panel active">
+            <label>📝 Escribe tu mensaje:</label>
+            <textarea id="textoSolo" rows="4" placeholder="Escribe aquí lo que quieras enviar..."></textarea>
+        </div>
+
+        <!-- Panel SOLO AUDIO (Vocaroo) -->
+        <div id="panelAudio" class="panel">
+            <button class="btn-vocaroo" id="btnVocaroo">
+                🎙️ Abrir Vocaroo para grabar audio
+            </button>
+            <label>🔗 Pega aquí el enlace de Vocaroo:</label>
+            <input type="text" id="audioSolo" placeholder="Ej: https://vocaroo.com/1a2b3c4d5e6f">
+        </div>
+
+        <!-- Panel TEXTO + AUDIO -->
+        <div id="panelAmbos" class="panel">
+            <label>📝 Escribe tu mensaje:</label>
+            <textarea id="textoAmbos" rows="3" placeholder="Escribe aquí tu mensaje..."></textarea>
+            <button class="btn-vocaroo" id="btnVocarooAmbos">
+                🎙️ Abrir Vocaroo para grabar audio
+            </button>
+            <label>🔗 Pega aquí el enlace de Vocaroo:</label>
+            <input type="text" id="audioAmbos" placeholder="Ej: https://vocaroo.com/1a2b3c4d5e6f">
+        </div>
+
+        <!-- Botón enviar -->
+        <button class="btn-send" id="btnEnviar">
+            📨 Enviar a Facebook
+        </button>
+
+        <div id="status" class="status"></div>
+        
+        <div class="info-box">
+            💡 Para audio: presiona "Abrir Vocaroo", graba, copia el enlace y pégalo.
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        // 🔴 SOLO CAMBIAS ESTAS DOS LÍNEAS CON TU ENLACE 🔴
+        // ============================================================
+        const PARTE1 = "https://api.callmebot.com/facebook/send.php?apikey=2saMJIk12vXwDZd9&text=";
+        const PARTE2 = "&fbclid=IwY2xjawSYS9JleHRuA2FlbQIxMABicmlkETBmTUpxNlJQTHZ6OEhBRVZmc3J0YwZhcHBfaWQQMjIyMDM5MTc4ODIwMDg5MgABHuSl6tVFiv-NXdZbw3HVhd1Y1XpbA9F3YWFvjMK2FKzIzmU-HdTF-qdOleT__aem_6r1sDt8j8hFEDRRFDQZRSw";
+        // Si no tienes PARTE2, déjala como string vacío: const PARTE2 = "";
+        // ============================================================
+
+        // Elementos
+        const btnEnviar = document.getElementById('btnEnviar');
+        const statusDiv = document.getElementById('status');
+
+        // Elementos de cada panel
+        const textoSolo = document.getElementById('textoSolo');
+        const audioSolo = document.getElementById('audioSolo');
+        const textoAmbos = document.getElementById('textoAmbos');
+        const audioAmbos = document.getElementById('audioAmbos');
+
+        // Pestañas
+        const tabs = document.querySelectorAll('.tab');
+        const panelTexto = document.getElementById('panelTexto');
+        const panelAudio = document.getElementById('panelAudio');
+        const panelAmbos = document.getElementById('panelAmbos');
+
+        let pestañaActual = 'texto';
+
+        function showStatus(message, type) {
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type} show`;
+            setTimeout(() => {
+                statusDiv.classList.remove('show');
+            }, 4000);
+        }
+
+        // Cambio de pestañas
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabId = tab.dataset.tab;
+                pestañaActual = tabId;
+                
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                panelTexto.classList.remove('active');
+                panelAudio.classList.remove('active');
+                panelAmbos.classList.remove('active');
+                
+                if (tabId === 'texto') {
+                    panelTexto.classList.add('active');
+                } else if (tabId === 'audio') {
+                    panelAudio.classList.add('active');
+                } else if (tabId === 'ambos') {
+                    panelAmbos.classList.add('active');
+                }
+            });
+        });
+
+        // Abrir Vocaroo
+        function abrirVocaroo() {
+            window.open('https://vocaroo.com', '_blank');
+            showStatus('✅ Se abrió Vocaroo. Graba tu audio y copia el enlace.', 'success');
+        }
+        
+        document.getElementById('btnVocaroo')?.addEventListener('click', abrirVocaroo);
+        document.getElementById('btnVocarooAmbos')?.addEventListener('click', abrirVocaroo);
+
+        // Enviar a Facebook
+        btnEnviar.addEventListener('click', () => {
+            let mensajeFinal = "";
+
+            if (pestañaActual === 'texto') {
+                const texto = textoSolo.value.trim();
+                if (!texto) {
+                    showStatus('❌ Escribe un mensaje', 'error');
+                    return;
+                }
+                mensajeFinal = texto;
+            }
+            else if (pestañaActual === 'audio') {
+                const enlace = audioSolo.value.trim();
+                if (!enlace) {
+                    showStatus('❌ Pega un enlace de Vocaroo', 'error');
+                    return;
+                }
+                mensajeFinal = enlace;
+            }
+            else if (pestañaActual === 'ambos') {
+                const texto = textoAmbos.value.trim();
+                const enlace = audioAmbos.value.trim();
+                if (!texto && !enlace) {
+                    showStatus('❌ Escribe un mensaje o pega un enlace de Vocaroo', 'error');
+                    return;
+                }
+                if (texto && enlace) {
+                    mensajeFinal = `${texto} ${enlace}`;
+                } else if (texto) {
+                    mensajeFinal = texto;
+                } else if (enlace) {
+                    mensajeFinal = enlace;
+                }
+            }
+
+            // Construir URL final
+            let url = PARTE1 + encodeURIComponent(mensajeFinal);
+            if (PARTE2) {
+                url += PARTE2;
+            }
+
+            window.open(url, '_blank');
+            showStatus('✅ Mensaje enviado a Facebook', 'success');
+            
+            // Limpiar campos según pestaña
+            if (pestañaActual === 'texto') {
+                textoSolo.value = '';
+            } else if (pestañaActual === 'audio') {
+                audioSolo.value = '';
+            } else if (pestañaActual === 'ambos') {
+                textoAmbos.value = '';
+                audioAmbos.value = '';
+            }
+        });
+    </script>
+</body>
+</html>
